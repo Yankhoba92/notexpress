@@ -20,6 +20,38 @@ abstract class AbstractModel
     // Methods
 
     /**
+     * Method find()
+     * To find an element in the database
+     * @param int $id
+     * @return void
+     */
+    public function find(string $slug): void
+    {
+        $query = $this->pdo->prepare(
+            "SELECT * FROM {$this->table} WHERE slug = '{$slug}'"
+        );
+        $query->execute();
+        $result = $query->fetch();
+        $this->hydrate($result);
+    }
+
+    /**
+     * Method hydrate()
+     * To hydrate the object with the data from the database
+     * @param array $data
+     * @return void
+     */
+    public function hydrate(array $data): void
+    {
+        foreach ($data as $key => $value) {
+            $method = 'set' . ucfirst($key);
+            if(method_exists($this, $method)) {
+                $this->$method($value);
+            }
+        }
+    } 
+
+    /**
      * Method create()
      * To add a new element in the database
      * @param void
@@ -34,15 +66,15 @@ abstract class AbstractModel
     }
 
     /**
-     * Method edit()
-     * To edit an element already in the database
+     * Method update()
+     * To update an element already in the database
      * @param int $id
      * @return void
      */
-    public function edit($id): void
+    public function update($slug): void
     {
         $query = $this->pdo->prepare(
-            "UPDATE {$this->table} SET {$this->fields} WHERE id = {$id}"
+            "UPDATE {$this->table} SET {$this->fields} WHERE slug = '{$slug}'"
         );
         $query->execute();
     }
@@ -54,17 +86,17 @@ abstract class AbstractModel
      * @param ?string $relation
      * @return void
      */
-    public function delete(int $id, ?string $relation): void
+    public function delete(string $slug, ?string $relation): void
     {
         if($relation) {
             $relationLower = strtolower($relation);
             $query = $this->pdo->prepare(
-                "DELETE FROM {$this->table} WHERE {$relationLower} = {$id}"
+                "DELETE FROM {$this->table} WHERE {$relationLower} = {$slug}"
             );
             $query->execute();
         } else {
             $query = $this->pdo->prepare(
-                "DELETE FROM {$this->table} WHERE id = {$id}"
+                "DELETE FROM {$this->table} WHERE id = {$slug}"
             );
             $query->execute();
         }
